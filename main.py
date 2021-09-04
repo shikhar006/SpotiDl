@@ -5,13 +5,14 @@ https://developer.spotify.com/dashboard/
 
 import spotipy
 from spotipy.oauth2 import SpotifyClientCredentials
-from youtube_dl import YoutubeDL
 import time
 import threading
 import shutil
 import os
 from pydub import AudioSegment
+
 from creds import *
+from modules.download import download
 
 try:
     os.mkdir("exports/")
@@ -39,6 +40,7 @@ while continue_ == "y":
         playlist = sp.user_playlist_tracks(
             "spotify", id)["items"]
         start_time = time.time()
+        print(f"- Proccessing {len(playlist)} song(s)")
 
     except:
         os.system("cls")
@@ -50,34 +52,28 @@ while continue_ == "y":
     songs = {}
     queries = 0
 
-    def download(ytquery, query, artist, album):
-        ydl_opts = {
-            'outtmpl': f'temp/{query}.mp3',
-            'format': 'bestaudio/best',
-            'postprocessors': [{
-                'key': 'FFmpegExtractAudio',
-                'preferredcodec': 'mp3',
-                'preferredquality': '192',
-            }],
-        }
-        songs[f"{query}.mp3"] = {"artist": artist, "album": album}
-
-        with YoutubeDL(ydl_opts) as ydl:
-            ydl.extract_info(f"ytsearch:{ytquery}", download=True)[
-                'entries'][0]
-
     threads = []
 
     for song in playlist:
+        # print(song)
+        # break
         songName = song['track']['name']
         for i in '*."/\[]:;|,#':
             songName = songName.replace(i, "")
         artist = song['track']['artists'][0]['name']
         album = song['track']['album']['name']
         query = songName + " by " + artist
-        print(query)
+
         x = threading.Thread(target=download, args=(
-            query, songName, artist, album,))
+            query, songs,
+            {
+                "artist": artist,
+                "album": album,
+                "#": song["track"]["track_number"],
+                "title": song["track"]["name"]
+            }
+        )
+        )
         threads.append(x)
         queries += 1
         x.start()
@@ -86,22 +82,19 @@ while continue_ == "y":
         thread.join()
 
     threads.clear()
-    print("Almost done, please wait for a few minutes depending on the length of the playlist")
-
     songs_ = list(songs.items())
 
     for key, item in songs_:
         if "?" in key:
             del songs[key]
-            print(key)
             songs[key.replace("?", "")] = item
 
     def convert(metadata, music_file):
-        print(f"Adding metadata to {music_file}")
+        print(f"- Adding metadata to {music_file}")
         song = AudioSegment.from_file(os.path.join("temp", music_file))
         song.export(os.path.join('exports', music_file),
                     format="mp3", tags=metadata)
-        print(f'Finished adding metadata to {music_file}')
+        print(f'- Finished adding metadata to {music_file}')
 
     for music_file in os.listdir("temp/"):
         if '#' in music_file:
@@ -121,7 +114,7 @@ while continue_ == "y":
     end_time = time.time()
     time_taken = end_time - start_time
 
-    print("Finished downloading {} song(s) in {} seconds.".format(
-        queries, round(time_taken, 1)))
+    print("- Finished downloading {} song(s) in {} minute(s).".format(
+        queries, round(time_taken, 1) / 60))
 
     continue_ = input("Do you want to continue?\ny/n:\n")

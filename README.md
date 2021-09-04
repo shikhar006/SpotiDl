@@ -13,6 +13,7 @@ Download your Spotify playlists along with the metadata without spotify premium
     - Track Name
     - Artist
     - Album
+    - Track Number
 
 ## Installation
 Check the [releases](https://github.com/shikhar006/SpotiDl/releases) page and download the most recent version.
