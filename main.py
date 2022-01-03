@@ -19,11 +19,14 @@ try:
 except:
     pass
 
+try:
+    client_credentials_manager = SpotifyClientCredentials(
+        client_id=cid, client_secret=secret)
 
-client_credentials_manager = SpotifyClientCredentials(
-    client_id=cid, client_secret=secret)
+    sp = spotipy.Spotify(client_credentials_manager=client_credentials_manager)
 
-sp = spotipy.Spotify(client_credentials_manager=client_credentials_manager)
+except:
+    print("This release is outdated please download the new version from https://github.com/shikhar006/SpotiDl/releases/")
 
 continue_ = "y"
 
@@ -55,8 +58,7 @@ while continue_ == "y":
     threads = []
 
     for song in playlist:
-        # print(song)
-        # break
+
         songName = song['track']['name']
         for i in '*."/\[]:;|,#':
             songName = songName.replace(i, "")
